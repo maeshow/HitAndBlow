@@ -6,16 +6,18 @@ public class App {
     private static final Random RANDOM = new Random();
 
     private static final int DIGITS = 4;
+    private static final int RANDOM_RANGE = 10;
+    private static final int RESULT_PATTERN = 2;
     private static final int MIN_NUMBER = (int) Math.pow(10, DIGITS - 1);
     private static final int MAX_NUMBER = (int) Math.pow(10, DIGITS);
-    private static final int BOUND = 10;
     private static final int[] INPUT = new int[DIGITS];
     private static final int[] ANSWER = new int[DIGITS];
-    private static final int[] RESULT = new int[2];
+    private static final int[] RESULT = new int[RESULT_PATTERN];
     private static final int HIT_INDEX = 0;
     private static final int BLOW_INDEX = 1;
-    private static final int LAST_INPUT_INDEX = DIGITS - 1;
+    private static final int LAST_INPUT_INDEX = INPUT.length - 1;
     private static final int DUMMY_ANSWER = -1;
+    private static final int RESPONES_COUNT_INIT = 1;
 
     public static void main(String[] args) {
         startGame();
@@ -35,9 +37,9 @@ public class App {
         for (int i = 0; i < ANSWER.length; i++) {
             initAnswer(i);
             int randomNumber = 0;
-            do {
-                randomNumber = RANDOM.nextInt(BOUND);
-            } while (isDuplicate(randomNumber));
+            while (isDuplicate(randomNumber)) {
+                randomNumber = RANDOM.nextInt(RANDOM_RANGE);
+            }
             ANSWER[i] = randomNumber;
         }
     }
@@ -58,7 +60,7 @@ public class App {
     }
 
     private static void startPlayerRespones() {
-        int count = 1;
+        int count = RESPONES_COUNT_INIT;
         while (!isCorrectAnswer()) {
             setPlayerInput(getPlayerInput());
             setHitAndBlowCount();
@@ -134,9 +136,9 @@ public class App {
     private static void showResult(int count) {
         if (isCorrectAnswer()) {
             showFormattedMessage(Messages.CORRECT, count);
-        } else {
-            showFormattedMessage(Messages.HINT, RESULT[HIT_INDEX], RESULT[BLOW_INDEX]);
+            return;
         }
+        showFormattedMessage(Messages.HINT, RESULT[HIT_INDEX], RESULT[BLOW_INDEX]);
     }
 
     private static void showWithNewLine(String message) {
