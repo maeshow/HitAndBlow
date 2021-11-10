@@ -5,7 +5,7 @@ public class App {
     private static final Scanner STDIN = new Scanner(System.in);
     private static final Random RANDOM = new Random();
 
-    private static final int DIGITS = 4;
+    private static final int DIGITS = 5;
     private static final int RANDOM_RANGE = 10;
     private static final int RESULT_PATTERN = 2;
     private static final int MIN_NUMBER = (int) Math.pow(10, DIGITS - 1);
@@ -18,6 +18,7 @@ public class App {
     private static final int LAST_INPUT_INDEX = INPUT.length - 1;
     private static final int DUMMY_ANSWER = -1;
     private static final int RESPONES_COUNT_INIT = 1;
+    private static final int HINT_FREQUENCY = 3;
 
     public static void main(String[] args) {
         startGame();
@@ -65,8 +66,19 @@ public class App {
             setPlayerInput(getPlayerInput());
             setHitAndBlowCount();
             showResult(count);
+            if (isDivisible(count, HINT_FREQUENCY)) {
+                showHint(getHintIndex(count));
+            }
             count++;
         }
+    }
+
+    private static boolean isDivisible(int a, int b) {
+        return a % b == 0;
+    }
+
+    private static int getHintIndex(int count) {
+        return (count / HINT_FREQUENCY) - 1;
     }
 
     private static boolean isCorrectAnswer() {
@@ -138,7 +150,11 @@ public class App {
             showFormattedMessage(Messages.CORRECT, count);
             return;
         }
-        showFormattedMessage(Messages.HINT, RESULT[HIT_INDEX], RESULT[BLOW_INDEX]);
+        showFormattedMessage(Messages.RESULT, RESULT[HIT_INDEX], RESULT[BLOW_INDEX]);
+    }
+
+    private static void showHint(int index) {
+        showFormattedMessage(Messages.HINT, ANSWER[index]);
     }
 
     private static void showWithNewLine(String message) {
