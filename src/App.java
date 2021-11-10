@@ -10,12 +10,8 @@ public class App {
     private static final int RESULT_PATTERN = 2;
     private static final int MIN_NUMBER = (int) Math.pow(10, DIGITS - 1);
     private static final int MAX_NUMBER = (int) Math.pow(10, DIGITS);
-    private static final int[] INPUT = new int[DIGITS];
-    private static final int[] ANSWER = new int[DIGITS];
-    private static final int[] RESULT = new int[RESULT_PATTERN];
     private static final int HIT_INDEX = 0;
     private static final int BLOW_INDEX = 1;
-    private static final int LAST_INPUT_INDEX = INPUT.length - 1;
     private static final int DUMMY_ANSWER = -1;
     private static final int RESPONES_COUNT_INIT = 1;
     private static final int HINT_FREQUENCY = 3;
@@ -26,48 +22,50 @@ public class App {
     }
 
     private static void startGame() {
-        createNumberbyRandom();
-        startPlayerRespones();
+        startPlayerRespones(createNumberbyRandom(DIGITS, RANDOM_RANGE));
     }
 
     private static void endGame() {
         STDIN.close();
     }
 
-    private static void createNumberbyRandom() {
-        for (int i = 0; i < ANSWER.length; i++) {
-            initAnswer(i);
+    private static int[] createNumberbyRandom(int digits, int randomRange) {
+        int[] answers = new int[digits];
+        for (int i = 0; i < answers.length; i++) {
+            initAnswer(i, answers);
             int randomNumber = 0;
-            while (isDuplicate(randomNumber)) {
-                randomNumber = RANDOM.nextInt(RANDOM_RANGE);
+            while (isDuplicate(answers, randomNumber)) {
+                randomNumber = RANDOM.nextInt(randomRange);
             }
-            ANSWER[i] = randomNumber;
+            answers[i] = randomNumber;
         }
+        return answers;
     }
 
-    private static void initAnswer(int count) {
+    private static void initAnswer(int count, int[] answers) {
         if (0 < count) {
-            ANSWER[count] = DUMMY_ANSWER;
+            answers[count] = DUMMY_ANSWER;
         }
     }
 
-    private static boolean isDuplicate(int randomNumber) {
-        for (int i = 0; i < ANSWER.length; i++) {
-            if (ANSWER[i] == randomNumber) {
+    private static boolean isDuplicate(int[] answers, int randomNumber) {
+        for (int i = 0; i < answers.length; i++) {
+            if (answers[i] == randomNumber) {
                 return true;
             }
         }
         return false;
     }
 
-    private static void startPlayerRespones() {
+    private static void startPlayerRespones(int[] answers) {
         int count = RESPONES_COUNT_INIT;
-        while (!isCorrectAnswer()) {
-            setPlayerInput(getPlayerInput());
-            setHitAndBlowCount();
-            showResult(count);
+        int[] result = new int[RESULT_PATTERN];
+        while (!isCorrectAnswer(result)) {
+            int[] input = getPlayerInput(getPlayerStdin());
+            result = getHitAndBlowCount(input, answers, result);
+            showResult(result, count);
             if (isDivisible(count, HINT_FREQUENCY)) {
-                showHint(getHintIndex(count));
+                showHint(answers, getHintIndex(count));
             }
             count++;
         }
@@ -81,40 +79,42 @@ public class App {
         return (count / HINT_FREQUENCY) - 1;
     }
 
-    private static boolean isCorrectAnswer() {
-        return RESULT[HIT_INDEX] == DIGITS;
+    private static boolean isCorrectAnswer(int[] result) {
+        return result[HIT_INDEX] == DIGITS;
     }
 
-    private static void setHitAndBlowCount() {
+    private static int[] getHitAndBlowCount(int[] input, int[] answers, int[] result) {
         int hitCount = 0;
         int blowCount = 0;
         for (int i = 0; i < DIGITS; i++) {
-            if (isHit(i)) {
+            if (isHit(input, answers, i)) {
                 hitCount++;
                 continue;
             }
-            if (isBlow(i)) {
+            if (isBlow(input, answers, i)) {
                 blowCount++;
             }
         }
-        RESULT[HIT_INDEX] = hitCount;
-        RESULT[BLOW_INDEX] = blowCount;
+        result[HIT_INDEX] = hitCount;
+        result[BLOW_INDEX] = blowCount;
+
+        return result;
     }
 
-    private static boolean isBlow(int index) {
-        for (int answer : ANSWER) {
-            if (INPUT[index] == answer) {
+    private static boolean isBlow(int[] input, int[] answers, int index) {
+        for (int answer : answers) {
+            if (input[index] == answer) {
                 return true;
             }
         }
         return false;
     }
 
-    private static boolean isHit(int index) {
-        return INPUT[index] == ANSWER[index];
+    private static boolean isHit(int[] input, int[] answers, int index) {
+        return input[index] == answers[index];
     }
 
-    private static int getPlayerInput() {
+    private static int getPlayerStdin() {
         showFormattedMessage(Messages.WAITING_INPUT, DIGITS);
         String input = STDIN.next();
         int inputNumber = 0;
@@ -123,7 +123,7 @@ public class App {
         } catch (NumberFormatException e) {
             showWithNewLine(Messages.ENTER_NUMBER_WARN);
             showNewLine();
-            return getPlayerInput();
+            return getPlayerStdin();
         }
 
         if (isCorrectRange(inputNumber)) {
@@ -131,30 +131,32 @@ public class App {
         }
         showWithNewLine(Messages.INVALID_NUMBER_WARN);
         showNewLine();
-        return getPlayerInput();
+        return getPlayerStdin();
     }
 
-    private static void setPlayerInput(int input) {
+    private static int[] getPlayerInput(int stdin) {
+        int[] input = new int[DIGITS];
         for (int i = 0; i < DIGITS; i++) {
-            INPUT[LAST_INPUT_INDEX - i] = input % 10;
-            input /= 10;
+            input[(input.length - 1) - i] = stdin % 10;
+            stdin /= 10;
         }
+        return input;
     }
 
     private static boolean isCorrectRange(int inputNumber) {
         return MIN_NUMBER <= inputNumber && inputNumber < MAX_NUMBER;
     }
 
-    private static void showResult(int count) {
-        if (isCorrectAnswer()) {
+    private static void showResult(int[] result, int count) {
+        if (isCorrectAnswer(result)) {
             showFormattedMessage(Messages.CORRECT, count);
             return;
         }
-        showFormattedMessage(Messages.RESULT, RESULT[HIT_INDEX], RESULT[BLOW_INDEX]);
+        showFormattedMessage(Messages.RESULT, result[HIT_INDEX], result[BLOW_INDEX]);
     }
 
-    private static void showHint(int index) {
-        showFormattedMessage(Messages.HINT, ANSWER[index]);
+    private static void showHint(int[] answers, int index) {
+        showFormattedMessage(Messages.HINT, answers[index]);
     }
 
     private static void showWithNewLine(String message) {
